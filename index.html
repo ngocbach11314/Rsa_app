@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title>Người nhận - Xác minh chữ ký số</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f0ff;
+      color: #3d0066;
+      padding: 30px;
+    }
+    h2 {
+      color: #5f00b8;
+    }
+    input, button {
+      margin-top: 10px;
+      display: block;
+      padding: 8px;
+      border-radius: 4px;
+      border: 1px solid #ccc;
+    }
+    button {
+      background-color: #9b5de5;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #7b2cbf;
+    }
+    pre {
+      background-color: #e6d6ff;
+      padding: 10px;
+      border: 1px solid #b197fc;
+      border-radius: 5px;
+      white-space: pre-wrap;
+      margin-top: 20px;
+    }
+  </style>
+  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+</head>
+<body>
+  <h2>🔍 Xác minh chữ ký số</h2>
+
+  <label>📄 File văn bản đã ký:</label>
+  <input type="file" id="signedFile">
+
+  <label>🔏 File chữ ký số:</label>
+  <input type="file" id="signatureFile">
+
+  <label>🔑 Khóa công khai (Public Key):</label>
+  <input type="file" id="publicKeyFile">
+
+  <button onclick="verifySignature()">✅ Kiểm tra chữ ký</button>
+
+  <pre id="verifyResult">Kết quả xác minh sẽ hiển thị tại đây...</pre>
+
+  <script>
+    const socket = io();
+
+    async function verifySignature() {
+      const textFile = document.getElementById('signedFile').files[0];
+      const sigFile = document.getElementById('signatureFile').files[0];
+      const pubKeyFile = document.getElementById('publicKeyFile').files[0];
+
+      if (!textFile || !sigFile || !pubKeyFile) {
+        alert("Vui lòng chọn đầy đủ cả 3 file: văn bản, chữ ký và khóa công khai.");
+        return;
+      }
+
+      const text = await textFile.text();
+      const signature = await sigFile.text();
+      const pubKey = await pubKeyFile.text();
+
+      socket.emit('verify_signature', {
+        message: text,
+        signature: signature,
+        public_key: pubKey
+      });
+    }
+
+    socket.on('verify_result', data => {
+      document.getElementById('verifyResult').textContent = data.verified
+        ? "✅ Chữ ký hợp lệ - Văn bản không bị chỉnh sửa."
+        : "❌ Chữ ký không hợp lệ hoặc văn bản đã bị thay đổi.";
+    });
+  </script>
+</body>
+</html>
